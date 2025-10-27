@@ -28,4 +28,8 @@
 .\objects\main.o: .\Library\stm32f10x_usart.h
 .\objects\main.o: .\Library\stm32f10x_wwdg.h
 .\objects\main.o: .\Library\misc.h
-.\objects\main.o: .\Hardware\PWM.h
+.\objects\main.o: .\Hardware\Motor.h
+.\objects\main.o: .\Hardware\OLED.h
+.\objects\main.o: .\Hardware\Key.h
+.\objects\main.o: .\Hardware\Serial.h
+.\objects\main.o: D:\ProgramFiles\Working\keil5\ARM\ARMCC\Bin\..\include\stdio.h

@@ -29,6 +29,8 @@
 ".\objects\motor.o"
 ".\objects\key.o"
 ".\objects\oled.o"
+".\objects\encoder.o"
+".\objects\serial.o"
 ".\objects\main.o"
 ".\objects\stm32f10x_it.o"
 --strict --scatter ".\Objects\ASCProject-2.sct"

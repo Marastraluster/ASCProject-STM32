@@ -1,10 +1,17 @@
 *** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\ProgramFiles\Working\keil5\ARM\ARMCC\Bin'
 Build target 'Target 1'
 compiling main.c...
-User\main.c(5): warning:  #223-D: function "OLED_Init" declared implicitly
-  	OLED_Init();
-User\main.c: 1 warning, 0 errors
+compiling Encoder.c...
+Hardware\Encoder.c(14): warning:  #1-D: last line of file ends without a newline
+  }
+Hardware\Encoder.c: 1 warning, 0 errors
+compiling Key.c...
+compiling Motor.c...
+Hardware\Motor.c(35): warning:  #1-D: last line of file ends without a newline
+  }
+Hardware\Motor.c: 1 warning, 0 errors
+compiling Serial.c...
 linking...
-Program Size: Code=2084 RO-data=252 RW-data=0 ZI-data=1632  
-".\Objects\ASCProject-2.axf" - 0 Error(s), 1 Warning(s).
+Program Size: Code=3240 RO-data=268 RW-data=24 ZI-data=1632  
+".\Objects\ASCProject-2.axf" - 0 Error(s), 2 Warning(s).
 Build Time Elapsed:  00:00:01
