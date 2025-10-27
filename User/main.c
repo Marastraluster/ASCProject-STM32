@@ -7,7 +7,9 @@
 
 int main(void){
 	OLED_Init();
-	
+	Motor_Init();
+	Key_Init();
+	Serial_Init();
 	
 	while (1){
 		
