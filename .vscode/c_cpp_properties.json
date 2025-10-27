@@ -3,10 +3,16 @@
         {
             "name": "Target 1",
             "includePath": [
+                "d:\\marti\\Documents\\HDU\\STM32\\3\\Hardware",
+                "d:\\marti\\Documents\\HDU\\STM32\\3\\Library",
+                "d:\\marti\\Documents\\HDU\\STM32\\3\\Start",
+                "d:\\marti\\Documents\\HDU\\STM32\\3\\System",
+                "d:\\marti\\Documents\\HDU\\STM32\\3\\User",
                 "D:\\ProgramFiles\\Working\\keil5\\ARM\\ARMCC\\include",
                 "D:\\ProgramFiles\\Working\\keil5\\ARM\\ARMCC\\include\\rw"
             ],
             "defines": [
+                "USE_STDPERIPH_DRIVER",
                 "__CC_ARM",
                 "__arm__",
                 "__align(x)=",

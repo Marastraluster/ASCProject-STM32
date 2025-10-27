@@ -1,0 +1,10 @@
+*** Using Compiler 'V5.06 update 5 (build 528)', folder: 'D:\ProgramFiles\Working\keil5\ARM\ARMCC\Bin'
+Build target 'Target 1'
+compiling main.c...
+User\main.c(5): warning:  #223-D: function "OLED_Init" declared implicitly
+  	OLED_Init();
+User\main.c: 1 warning, 0 errors
+linking...
+Program Size: Code=2084 RO-data=252 RW-data=0 ZI-data=1632  
+".\Objects\ASCProject-2.axf" - 0 Error(s), 1 Warning(s).
+Build Time Elapsed:  00:00:01
