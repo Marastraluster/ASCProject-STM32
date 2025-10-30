@@ -68,26 +68,26 @@ void Timer_Init(void)
 
     TIM_Cmd(TIM3, ENABLE);
 
-	/*添加TIM2和TIM4定时器初始化*/
-	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-    TIM_TimeBaseInitTypeDef t2;
-    t2.TIM_ClockDivision = TIM_CKD_DIV1;
-    t2.TIM_CounterMode = TIM_CounterMode_Up;
-    t2.TIM_Period = 100 - 1;        // 100 / 100kHz = 1ms
-    t2.TIM_Prescaler = 720 - 1;     // 72MHz / 720 = 100kHz
-    t2.TIM_RepetitionCounter = 0;
-    TIM_TimeBaseInit(TIM2, &t2);
-    TIM_ClearFlag(TIM2, TIM_FLAG_Update);
-    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+	/*添加TIM5和TIM4定时器初始化*/
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM5, ENABLE);
+    TIM_TimeBaseInitTypeDef t5;
+    t5.TIM_ClockDivision = TIM_CKD_DIV1;
+    t5.TIM_CounterMode = TIM_CounterMode_Up;
+    t5.TIM_Period = 100 - 1;        // 100 / 100kHz = 1ms
+    t5.TIM_Prescaler = 720 - 1;     // 72MHz / 720 = 100kHz
+    t5.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM5, &t5);
+    TIM_ClearFlag(TIM5, TIM_FLAG_Update);
+    TIM_ITConfig(TIM5, TIM_IT_Update, ENABLE);
 
-    NVIC_InitTypeDef nvic2;
-    nvic2.NVIC_IRQChannel = TIM2_IRQn;
-    nvic2.NVIC_IRQChannelCmd = ENABLE;
-    nvic2.NVIC_IRQChannelPreemptionPriority = 4; // 低于TIM1
-    nvic2.NVIC_IRQChannelSubPriority = 0;
-    NVIC_Init(&nvic2);
+    NVIC_InitTypeDef nvic5;
+    nvic5.NVIC_IRQChannel = TIM5_IRQn;
+    nvic5.NVIC_IRQChannelCmd = ENABLE;
+    nvic5.NVIC_IRQChannelPreemptionPriority = 4; // 低于TIM1
+    nvic5.NVIC_IRQChannelSubPriority = 0;
+    NVIC_Init(&nvic5);
 
-    TIM_Cmd(TIM4, ENABLE);
+    TIM_Cmd(TIM5s, ENABLE);
 
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
     TIM_TimeBaseInitTypeDef t4;
@@ -101,7 +101,7 @@ void Timer_Init(void)
     TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
 
     NVIC_InitTypeDef nvic4;
-    nvic4.NVIC_IRQChannel = TIM2_IRQn;
+    nvic4.NVIC_IRQChannel = TIM4_IRQn;
     nvic4.NVIC_IRQChannelCmd = ENABLE;
     nvic4.NVIC_IRQChannelPreemptionPriority = 5; // 低于TIM1
     nvic4.NVIC_IRQChannelSubPriority = 0;

@@ -6,7 +6,7 @@
 // 编码器结构体
 typedef struct {
     TIM_TypeDef* TIMx;          // 定时器
-    int32_t total_count;        // 累计编码器计数值（处理溢出）
+    int32_t total_count;        // 累计编码器计数值
     int16_t last_count;         // 上次定时器计数值
     float position;             // 当前位置
     float target_position;      // 目标位置
@@ -23,7 +23,6 @@ extern Encoder_PID_t motor1, motor2;
 void Encoder_Init(void);
 void Encoder_Update(Encoder_PID_t* motor);
 float Incremental_PID_Calculate(Encoder_PID_t* motor, float target, float current);
-void Motor_Set_PWM(Encoder_PID_t* motor, int16_t pwm);
 int32_t Encoder_Get_TotalCount(Encoder_PID_t* motor);
 void Encoder_Clear_Count(Encoder_PID_t* motor);
 
