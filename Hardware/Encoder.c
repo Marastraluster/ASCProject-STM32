@@ -19,9 +19,9 @@ void Encoder_Init(void){
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
     
-    // 定时器基础配置
-    TIM_TimeBaseStructure.TIM_Period = 65535;
-    TIM_TimeBaseStructure.TIM_Prescaler = 0;
+    // 定时器基础配置 - 编码器模式
+    TIM_TimeBaseStructure.TIM_Period = 65535;           // 自动重装载值
+    TIM_TimeBaseStructure.TIM_Prescaler = 0;            // 预分频器，不分频
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
@@ -31,7 +31,7 @@ void Encoder_Init(void){
                               TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
     
     TIM_ICStructInit(&TIM_ICInitStructure);
-    TIM_ICInitStructure.TIM_ICFilter = 6;
+    TIM_ICInitStructure.TIM_ICFilter = 6;  // 滤波器
     TIM_ICInit(TIM3, &TIM_ICInitStructure);
     
     // 电机2编码器 - TIM4在PB6,PB7
@@ -50,28 +50,28 @@ void Encoder_Init(void){
     TIM_Cmd(TIM4, ENABLE);
     
     // 初始化电机参数
-    // 电机1使用TIM3
+    // 电机1使用TIM3（PA6,PA7）
     motor1.TIMx = TIM3;
     motor1.total_count = 0;
     motor1.last_count = 0;
     motor1.position = 0;
     motor1.target_position = 0;
-    motor1.kp = 0.5f;    // 初始比例系数
-    motor1.ki = 0.01f;   // 积分系数  
-    motor1.kd = 0.05f;   // 微分系数
+    motor1.kp = 2.0f;    // 比例系数 - 需要调试
+    motor1.ki = 0.02f;   // 积分系数  
+    motor1.kd = 0.1f;    // 微分系数
     motor1.last_error = 0;
     motor1.prev_error = 0;
     motor1.output = 0;
     
-    // 电机2使用TIM4
+    // 电机2使用TIM4（PB6,PB7）
     motor2.TIMx = TIM4;
     motor2.total_count = 0;
     motor2.last_count = 0;
     motor2.position = 0;
     motor2.target_position = 0;
-    motor2.kp = 0.5f;
-    motor2.ki = 0.01f;
-    motor2.kd = 0.05f;
+    motor2.kp = 2.0f;
+    motor2.ki = 0.02f;
+    motor2.kd = 0.1f;
     motor2.last_error = 0;
     motor2.prev_error = 0;
     motor2.output = 0;

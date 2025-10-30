@@ -17,9 +17,9 @@ void PWM_Init(void){
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &GPIO_InitStructure);
     
-    // 定时器时基配置
-    TIM_TimeBaseStructure.TIM_Period = 10000 - 1;        // 自动重装载值
-    TIM_TimeBaseStructure.TIM_Prescaler = 720 - 1;       // 预分频器 72MHz/720 = 100kHz
+    // 定时器时基配置 - 修正为10kHz PWM频率
+    TIM_TimeBaseStructure.TIM_Period = 1000 - 1;        // 自动重装载值
+    TIM_TimeBaseStructure.TIM_Prescaler = 72 - 1;       // 预分频器 72MHz/72 = 1MHz
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
@@ -48,6 +48,10 @@ void PWM_Init(void){
 
 // 设置两个电机的PWM值
 void PWM_SetMotorCompare(uint16_t compareL, uint16_t compareR){
+    // 限制PWM值在0-1000范围内
+    if(compareL > 1000) compareL = 1000;
+    if(compareR > 1000) compareR = 1000;
+    
     TIM_SetCompare3(TIM2, compareL);  // 左电机PWMA (PA2)
     TIM_SetCompare4(TIM2, compareR);  // 右电机PWMB (PA3)
 }
