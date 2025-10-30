@@ -131,7 +131,7 @@ void TIM3_IRQHandler(void)
 }
 */
 /*
-void TIM3_IRQHandler(void)
+void TIM2_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM2, TIM_IT_Update) == sSET)
     {
@@ -141,7 +141,7 @@ void TIM3_IRQHandler(void)
 }
 */
 /*
-void TIM3_IRQHandler(void)
+void TIM4_IRQHandler(void)
 {
     if (TIM_GetITStatus(TIM4, TIM_IT_Update) == sSET)
     {
