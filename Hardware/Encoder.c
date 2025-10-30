@@ -1,5 +1,6 @@
 #include "stm32f10x.h"                  // Device header
 #include "encoder.h"
+#include <math.h>
 
 // 电机结构体定义
 Encoder_PID_t motor1, motor2;
@@ -20,8 +21,8 @@ void Encoder_Init(void){
     GPIO_Init(GPIOA, &GPIO_InitStructure);
     
     // 定时器基础配置 - 编码器模式
-    TIM_TimeBaseStructure.TIM_Period = 65535;           // 自动重装载值
-    TIM_TimeBaseStructure.TIM_Prescaler = 0;            // 预分频器，不分频
+    TIM_TimeBaseStructure.TIM_Period = 65535;
+    TIM_TimeBaseStructure.TIM_Prescaler = 0;
     TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
     TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
     TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
@@ -31,7 +32,7 @@ void Encoder_Init(void){
                               TIM_ICPolarity_Rising, TIM_ICPolarity_Rising);
     
     TIM_ICStructInit(&TIM_ICInitStructure);
-    TIM_ICInitStructure.TIM_ICFilter = 6;  // 滤波器
+    TIM_ICInitStructure.TIM_ICFilter = 6;
     TIM_ICInit(TIM3, &TIM_ICInitStructure);
     
     // 电机2编码器 - TIM4在PB6,PB7
@@ -56,12 +57,15 @@ void Encoder_Init(void){
     motor1.last_count = 0;
     motor1.position = 0;
     motor1.target_position = 0;
-    motor1.kp = 2.0f;    // 比例系数 - 需要调试
-    motor1.ki = 0.02f;   // 积分系数  
-    motor1.kd = 0.1f;    // 微分系数
+    motor1.target_velocity = 0;
+    motor1.current_velocity = 0;
+    motor1.kp = 3.0f;    // 速度环PID参数
+    motor1.ki = 0.5f;
+    motor1.kd = 0.1f;
     motor1.last_error = 0;
     motor1.prev_error = 0;
     motor1.output = 0;
+    motor1.last_total_count = 0;
     
     // 电机2使用TIM4（PB6,PB7）
     motor2.TIMx = TIM4;
@@ -69,12 +73,15 @@ void Encoder_Init(void){
     motor2.last_count = 0;
     motor2.position = 0;
     motor2.target_position = 0;
-    motor2.kp = 2.0f;
-    motor2.ki = 0.02f;
+    motor2.target_velocity = 0;
+    motor2.current_velocity = 0;
+    motor2.kp = 3.0f;
+    motor2.ki = 0.5f;
     motor2.kd = 0.1f;
     motor2.last_error = 0;
     motor2.prev_error = 0;
     motor2.output = 0;
+    motor2.last_total_count = 0;
 }
 
 // 获取累计编码器计数值
@@ -90,6 +97,8 @@ void Encoder_Clear_Count(Encoder_PID_t* motor)
     motor->total_count = 0;
     motor->last_count = 0;
     motor->position = 0;
+    motor->last_total_count = 0;
+    motor->current_velocity = 0;
 }
 
 // 更新编码器数据（处理溢出）
@@ -105,9 +114,9 @@ void Encoder_Update(Encoder_PID_t* motor)
     
     // 如果变化量过大，说明发生了溢出
     if(count_diff > 32767) {
-        count_diff -= 65536;  // 向下溢出修正
+        count_diff -= 65536;
     } else if(count_diff < -32767) {
-        count_diff += 65536;  // 向上溢出修正
+        count_diff += 65536;
     }
     
     // 累加到总计数
@@ -118,6 +127,20 @@ void Encoder_Update(Encoder_PID_t* motor)
     
     // 保存当前计数值用于下次计算
     motor->last_count = current_count;
+}
+
+// 计算电机速度（单位：计数/控制周期）
+void Encoder_CalculateVelocity(Encoder_PID_t* motor)
+{
+    int32_t count_diff = motor->total_count - motor->last_total_count;
+    motor->current_velocity = (float)count_diff;
+    motor->last_total_count = motor->total_count;
+}
+
+// 设置电机目标速度
+void SetMotorVelocity(Encoder_PID_t* motor, float velocity)
+{
+    motor->target_velocity = velocity;
 }
 
 // 增量式PID计算
