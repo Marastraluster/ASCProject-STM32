@@ -1,9 +1,12 @@
-#include "stm32f10x.h"                  // Device header
+#include "stm32f10x.h"                  
 #include "encoder.h"
 #include <math.h>
 
 // 电机结构体定义
 Encoder_PID_t motor1, motor2;
+
+// 位置跟随标志
+uint8_t position_follow_enabled = 0;
 
 void Encoder_Init(void){
     GPIO_InitTypeDef GPIO_InitStructure;
@@ -50,8 +53,7 @@ void Encoder_Init(void){
     TIM_Cmd(TIM3, ENABLE);
     TIM_Cmd(TIM4, ENABLE);
     
-    // 初始化电机参数
-    // 电机1使用TIM3（PA6,PA7）
+    // 初始化电机1参数（主电机，手动控制）
     motor1.TIMx = TIM3;
     motor1.total_count = 0;
     motor1.last_count = 0;
@@ -59,15 +61,26 @@ void Encoder_Init(void){
     motor1.target_position = 0;
     motor1.target_velocity = 0;
     motor1.current_velocity = 0;
-    motor1.kp = 3.0f;    // 速度环PID参数
-    motor1.ki = 0.5f;
-    motor1.kd = 0.1f;
-    motor1.last_error = 0;
-    motor1.prev_error = 0;
+    
+    // 位置PID参数（如果电机1也需要位置控制）
+    motor1.pos_kp = 4.0f;
+    motor1.pos_ki = 0.1f;
+    motor1.pos_kd = 0.5f;
+    motor1.pos_integral = 0;
+    motor1.pos_last_error = 0;
+    
+    // 速度PID参数
+    motor1.vel_kp = 3.0f;
+    motor1.vel_ki = 0.5f;
+    motor1.vel_kd = 0.1f;
+    motor1.vel_last_error = 0;
+    motor1.vel_prev_error = 0;
+    
     motor1.output = 0;
     motor1.last_total_count = 0;
+    motor1.follow_mode = 0;
     
-    // 电机2使用TIM4（PB6,PB7）
+    // 初始化电机2参数（从电机，跟随电机1）
     motor2.TIMx = TIM4;
     motor2.total_count = 0;
     motor2.last_count = 0;
@@ -75,13 +88,24 @@ void Encoder_Init(void){
     motor2.target_position = 0;
     motor2.target_velocity = 0;
     motor2.current_velocity = 0;
-    motor2.kp = 3.0f;
-    motor2.ki = 0.5f;
-    motor2.kd = 0.1f;
-    motor2.last_error = 0;
-    motor2.prev_error = 0;
+    
+    // 位置PID参数 - 调整这些参数来优化跟随性能
+    motor2.pos_kp = 5.0f;      // 比例系数 - 影响响应速度
+    motor2.pos_ki = 0.05f;     // 积分系数 - 消除静差
+    motor2.pos_kd = 0.8f;      // 微分系数 - 抑制振荡
+    motor2.pos_integral = 0;
+    motor2.pos_last_error = 0;
+    
+    // 速度PID参数
+    motor2.vel_kp = 3.0f;
+    motor2.vel_ki = 0.5f;
+    motor2.vel_kd = 0.1f;
+    motor2.vel_last_error = 0;
+    motor2.vel_prev_error = 0;
+    
     motor2.output = 0;
     motor2.last_total_count = 0;
+    motor2.follow_mode = 0;
 }
 
 // 获取累计编码器计数值
@@ -99,9 +123,11 @@ void Encoder_Clear_Count(Encoder_PID_t* motor)
     motor->position = 0;
     motor->last_total_count = 0;
     motor->current_velocity = 0;
+    motor->pos_integral = 0;
+    motor->pos_last_error = 0;
 }
 
-// 更新编码器数据（处理溢出）
+// 更新编码器数据
 void Encoder_Update(Encoder_PID_t* motor)
 {
     int16_t current_count, count_diff;
@@ -112,7 +138,6 @@ void Encoder_Update(Encoder_PID_t* motor)
     // 计算计数值变化（处理溢出）
     count_diff = current_count - motor->last_count;
     
-    // 如果变化量过大，说明发生了溢出
     if(count_diff > 32767) {
         count_diff -= 65536;
     } else if(count_diff < -32767) {
@@ -122,14 +147,14 @@ void Encoder_Update(Encoder_PID_t* motor)
     // 累加到总计数
     motor->total_count += count_diff;
     
-    // 更新位置（这里直接用计数值作为位置）
-    motor->position = (float)motor->total_count;
+    // 更新位置（将编码器计数转换为角度，假设1000计数=1圈）
+    motor->position = (float)motor->total_count / 1000.0f * 360.0f; // 转换为角度
     
     // 保存当前计数值用于下次计算
     motor->last_count = current_count;
 }
 
-// 计算电机速度（单位：计数/控制周期）
+// 计算电机速度
 void Encoder_CalculateVelocity(Encoder_PID_t* motor)
 {
     int32_t count_diff = motor->total_count - motor->last_total_count;
@@ -137,31 +162,74 @@ void Encoder_CalculateVelocity(Encoder_PID_t* motor)
     motor->last_total_count = motor->total_count;
 }
 
-// 设置电机目标速度
-void SetMotorVelocity(Encoder_PID_t* motor, float velocity)
+// 位置式PID计算
+float Position_PID_Calculate(Encoder_PID_t* motor, float target, float current)
 {
-    motor->target_velocity = velocity;
+    float error, integral, derivative;
+    float output;
+    
+    // 计算当前误差
+    error = target - current;
+    
+    // 积分项（带限幅防止积分饱和）
+    motor->pos_integral += error;
+    if(motor->pos_integral > 1000) motor->pos_integral = 1000;
+    if(motor->pos_integral < -1000) motor->pos_integral = -1000;
+    integral = motor->pos_integral;
+    
+    // 微分项
+    derivative = error - motor->pos_last_error;
+    
+    // 位置式PID公式: u(k) = Kp*e(k) + Ki*∑e(k) + Kd*(e(k)-e(k-1))
+    output = motor->pos_kp * error + motor->pos_ki * integral + motor->pos_kd * derivative;
+    
+    // 更新误差历史
+    motor->pos_last_error = error;
+    
+    return output;
 }
 
-// 增量式PID计算
+// 增量式PID计算（速度环）
 float Incremental_PID_Calculate(Encoder_PID_t* motor, float target, float current)
 {
     float error, delta_error, delta2_error;
     float delta_output;
     
-    // 计算当前误差
     error = target - current;
+    delta_error = error - motor->vel_last_error;
+    delta2_error = error - 2 * motor->vel_last_error + motor->vel_prev_error;
     
-    // 计算误差变化量
-    delta_error = error - motor->last_error;
-    delta2_error = error - 2 * motor->last_error + motor->prev_error;
+    delta_output = motor->vel_kp * delta_error + motor->vel_ki * error + motor->vel_kd * delta2_error;
     
-    // 增量式PID公式: Δu = Kp*(e(k)-e(k-1)) + Ki*e(k) + Kd*(e(k)-2e(k-1)+e(k-2))
-    delta_output = motor->kp * delta_error + motor->ki * error + motor->kd * delta2_error;
-    
-    // 更新误差历史
-    motor->prev_error = motor->last_error;
-    motor->last_error = error;
+    motor->vel_prev_error = motor->vel_last_error;
+    motor->vel_last_error = error;
     
     return delta_output;
+}
+
+// 设置电机目标速度
+void SetMotorVelocity(Encoder_PID_t* motor, float velocity)
+{
+    motor->target_velocity = velocity;
+    motor->follow_mode = 0; // 速度模式
+}
+
+// 设置电机目标位置
+void SetMotorPosition(Encoder_PID_t* motor, float position)
+{
+    motor->target_position = position;
+    motor->follow_mode = 0; // 位置模式（非跟随）
+}
+
+// 启用位置跟随模式
+void EnablePositionFollow(Encoder_PID_t* follower, Encoder_PID_t* leader)
+{
+    follower->follow_mode = 1;
+    // 不清除位置，保持当前位置关系
+}
+
+// 禁用位置跟随模式
+void DisablePositionFollow(Encoder_PID_t* motor)
+{
+    motor->follow_mode = 0;
 }
