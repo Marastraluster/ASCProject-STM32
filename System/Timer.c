@@ -67,6 +67,47 @@ void Timer_Init(void)
     NVIC_Init(&nvic3);
 
     TIM_Cmd(TIM3, ENABLE);
+
+	/*添加TIM2和TIM4定时器初始化*/
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+    TIM_TimeBaseInitTypeDef t2;
+    t2.TIM_ClockDivision = TIM_CKD_DIV1;
+    t2.TIM_CounterMode = TIM_CounterMode_Up;
+    t2.TIM_Period = 100 - 1;        // 100 / 100kHz = 1ms
+    t2.TIM_Prescaler = 720 - 1;     // 72MHz / 720 = 100kHz
+    t2.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM2, &t2);
+    TIM_ClearFlag(TIM2, TIM_FLAG_Update);
+    TIM_ITConfig(TIM2, TIM_IT_Update, ENABLE);
+
+    NVIC_InitTypeDef nvic2;
+    nvic2.NVIC_IRQChannel = TIM2_IRQn;
+    nvic2.NVIC_IRQChannelCmd = ENABLE;
+    nvic2.NVIC_IRQChannelPreemptionPriority = 4; // 低于TIM1
+    nvic2.NVIC_IRQChannelSubPriority = 0;
+    NVIC_Init(&nvic2);
+
+    TIM_Cmd(TIM4, ENABLE);
+
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+    TIM_TimeBaseInitTypeDef t4;
+    t4.TIM_ClockDivision = TIM_CKD_DIV1;
+    t4.TIM_CounterMode = TIM_CounterMode_Up;
+    t4.TIM_Period = 100 - 1;        // 100 / 100kHz = 1ms
+    t4.TIM_Prescaler = 720 - 1;     // 72MHz / 720 = 100kHz
+    t4.TIM_RepetitionCounter = 0;
+    TIM_TimeBaseInit(TIM4, &t4);
+    TIM_ClearFlag(TIM4, TIM_FLAG_Update);
+    TIM_ITConfig(TIM4, TIM_IT_Update, ENABLE);
+
+    NVIC_InitTypeDef nvic4;
+    nvic4.NVIC_IRQChannel = TIM2_IRQn;
+    nvic4.NVIC_IRQChannelCmd = ENABLE;
+    nvic4.NVIC_IRQChannelPreemptionPriority = 5; // 低于TIM1
+    nvic4.NVIC_IRQChannelSubPriority = 0;
+    NVIC_Init(&nvic4);
+
+    TIM_Cmd(TIM4, ENABLE);
 }
 
 /* 定时器中断函数，可以复制到使用它的地方
@@ -85,6 +126,26 @@ void TIM3_IRQHandler(void)
     if (TIM_GetITStatus(TIM3, TIM_IT_Update) == sSET)
     {
         TIM_ClearITPendingBit(TIM3, TIM_IT_Update);
+        Key_Scan();  // 1ms 调一次
+    }
+}
+*/
+/*
+void TIM3_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) == sSET)
+    {
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+        Key_Scan();  // 1ms 调一次
+    }
+}
+*/
+/*
+void TIM3_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM4, TIM_IT_Update) == sSET)
+    {
+        TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
         Key_Scan();  // 1ms 调一次
     }
 }
